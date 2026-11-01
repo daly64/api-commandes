@@ -3,7 +3,6 @@ import express from 'express';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import { fileURLToPath } from 'node:url';
-import { exigerCleApi } from './middleware/auth.js';
 import commandesRouter from './routes/commandes.routes.js';
 import menuRouter from './routes/menu.routes.js';
 
@@ -29,8 +28,7 @@ app.use(
 
 app.use(express.static(fileURLToPath(new URL('../public', import.meta.url))));
 
-// Les commandes exigent la clé d'accès ; le menu reste public
-app.use('/api/commandes', exigerCleApi, commandesRouter);
+app.use('/api/commandes', commandesRouter);
 app.use('/api/menu', menuRouter);
 
 // Erreurs : corps mal formé ou trop grand -> 400 ; autre erreur -> 500 sans détails techniques

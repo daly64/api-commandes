@@ -85,4 +85,3 @@ button.secondaire { width: 100%; background: #e8efe9; color: #3b6e4f; }
 
 .actions { display: flex; gap: 8px; margin-top: 8px; }
 .actions button { flex: 1; }
-button.danger { background: #f0d7d7; color: #8a1c1c; }
