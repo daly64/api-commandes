@@ -47,7 +47,8 @@ export default function App() {
         setCommandes([]);
         setMessageAcces('Clé refusée');
       } else {
-        setEtat('Connexion perdue, nouvelle tentative…');
+        // Pas de réponse du tout : réseau coupé ou serveur arrêté ; sinon, le message renvoyé par l'API
+        setEtat(erreur instanceof TypeError ? 'Serveur injoignable, nouvelle tentative…' : erreur.message);
       }
     }
   }, []);
