@@ -60,25 +60,29 @@ Renvoie les catégories du menu, chacune avec ses produits. Les données viennen
 
 ```json
 {
-  "categories": [
-    { "id": "6", "nom": "cafes", "visible": true }
-  ],
+  "categories": [{ "id": "6", "nom": "cafes", "visible": true }],
   "produits": [
-    { "id": "14", "nom": "Express", "prix": 2, "categorieId": "6", "visible": true }
+    {
+      "id": "14",
+      "nom": "Express",
+      "prix": 2,
+      "categorieId": "6",
+      "visible": true
+    }
   ]
 }
 ```
 
-| Champ | Type | Description |
-|---|---|---|
-| `categories[].id` | string | Identifiant de la catégorie |
-| `categories[].nom` | string | Nom affiché |
-| `categories[].visible` | boolean | `false` si la catégorie est masquée |
-| `produits[].id` | string | Identifiant du produit |
-| `produits[].nom` | string | Nom affiché |
-| `produits[].prix` | number | Prix (en dinars) |
-| `produits[].categorieId` | string | Catégorie du produit |
-| `produits[].visible` | boolean | `false` si le produit est masqué |
+| Champ                    | Type    | Description                         |
+| ------------------------ | ------- | ----------------------------------- |
+| `categories[].id`        | string  | Identifiant de la catégorie         |
+| `categories[].nom`       | string  | Nom affiché                         |
+| `categories[].visible`   | boolean | `false` si la catégorie est masquée |
+| `produits[].id`          | string  | Identifiant du produit              |
+| `produits[].nom`         | string  | Nom affiché                         |
+| `produits[].prix`        | number  | Prix (en dinars)                    |
+| `produits[].categorieId` | string  | Catégorie du produit                |
+| `produits[].visible`     | boolean | `false` si le produit est masqué    |
 
 **Réponse `502 Bad Gateway`** : l'API `menu-board` est injoignable ou a renvoyé une erreur.
 
@@ -126,12 +130,12 @@ Crée une commande pour une table.
 }
 ```
 
-| Champ | Type | Obligatoire | Description |
-|---|---|---|---|
-| `table` | entier | oui | Numéro de table, entre 1 et 10 |
-| `lignes` | tableau | oui | De 1 à 20 lignes |
-| `lignes[].produit` | string | oui | Nom du produit, non vide |
-| `lignes[].quantite` | entier | oui | Entre 1 et 50 |
+| Champ               | Type    | Obligatoire | Description                    |
+| ------------------- | ------- | ----------- | ------------------------------ |
+| `table`             | entier  | oui         | Numéro de table, entre 1 et 10 |
+| `lignes`            | tableau | oui         | De 1 à 20 lignes               |
+| `lignes[].produit`  | string  | oui         | Nom du produit, non vide       |
+| `lignes[].quantite` | entier  | oui         | Entre 1 et 50                  |
 
 **Réponse `201 Created`** : la commande créée, avec `statut: "en_attente"`.
 
@@ -186,13 +190,13 @@ Modifie le statut d'une commande.
 
 ## Statuts d'une commande
 
-| Statut | Signification |
-|---|---|
-| `en_attente` | Commande reçue, pas encore lancée |
-| `en_preparation` | En cours de préparation en cuisine ou au bar |
-| `prete` | Prête à être servie |
-| `servie` | Apportée à la table |
-| `payee` | Encaissée. La commande n'apparaît plus dans `GET /api/commandes` |
+| Statut           | Signification                                                    |
+| ---------------- | ---------------------------------------------------------------- |
+| `en_attente`     | Commande reçue, pas encore lancée                                |
+| `en_preparation` | En cours de préparation en cuisine ou au bar                     |
+| `prete`          | Prête à être servie                                              |
+| `servie`         | Apportée à la table                                              |
+| `payee`          | Encaissée. La commande n'apparaît plus dans `GET /api/commandes` |
 
 Le cycle normal est `en_attente → en_preparation → prete → servie → payee`. Pour l'instant, l'API accepte **n'importe quel statut valide** à chaque modification ; l'ordre n'est pas imposé.
 
@@ -200,26 +204,26 @@ Le cycle normal est `en_attente → en_preparation → prete → servie → paye
 
 ## Règles de validation
 
-| Champ | Règle |
-|---|---|
-| `table` | Entier entre 1 et 10 |
-| `lignes` | Tableau de 1 à 20 éléments |
-| `lignes[].produit` | Texte non vide (les espaces en début et fin sont retirés) |
-| `lignes[].quantite` | Entier entre 1 et 50 |
-| `lignes[].produit` (taille) | 100 caractères au maximum |
-| `lignes` (nombre) | 20 lignes au maximum |
-| `statut` | Une des valeurs de la section [Statuts](#statuts-dune-commande) |
+| Champ                       | Règle                                                           |
+| --------------------------- | --------------------------------------------------------------- |
+| `table`                     | Entier entre 1 et 10                                            |
+| `lignes`                    | Tableau de 1 à 20 éléments                                      |
+| `lignes[].produit`          | Texte non vide (les espaces en début et fin sont retirés)       |
+| `lignes[].quantite`         | Entier entre 1 et 50                                            |
+| `lignes[].produit` (taille) | 100 caractères au maximum                                       |
+| `lignes` (nombre)           | 20 lignes au maximum                                            |
+| `statut`                    | Une des valeurs de la section [Statuts](#statuts-dune-commande) |
 
 ---
 
 ## Erreurs
 
-| Code | Quand |
-|---|---|
-| `400` | Données invalides (validation échouée) |
-| `401` | Clé d'accès absente ou invalide |
-| `404` | Commande introuvable |
-| `429` | Trop de requêtes dans la minute |
+| Code  | Quand                                          |
+| ----- | ---------------------------------------------- |
+| `400` | Données invalides (validation échouée)         |
+| `401` | Clé d'accès absente ou invalide                |
+| `404` | Commande introuvable                           |
+| `429` | Trop de requêtes dans la minute                |
 | `502` | Menu indisponible (`GET /api/menu` uniquement) |
 
 Le corps d'erreur contient soit `erreurs` (liste de messages), soit `erreur` (un message).
@@ -230,13 +234,13 @@ Le corps d'erreur contient soit `erreurs` (liste de messages), soit `erreur` (un
 
 Variables d'environnement facultatives :
 
-| Variable | Valeur par défaut | Rôle |
-|---|---|---|
-| `DATABASE_URL` | (obligatoire) | Chaîne de connexion PostgreSQL fournie par Neon |
-| `API_KEY` | (obligatoire) | Clé d'accès du personnel, envoyée dans l'en-tête `X-Api-Key` |
-| `PORT` | `3000` | Port d'écoute en local |
-| `MENU_URL` | `https://menu-board-api-murex.vercel.app/menu` | Adresse du menu |
-| `VERCEL` | (absente) | Si définie, le serveur ne démarre pas et l'app est exportée |
+| Variable       | Valeur par défaut                              | Rôle                                                         |
+| -------------- | ---------------------------------------------- | ------------------------------------------------------------ |
+| `DATABASE_URL` | (obligatoire)                                  | Chaîne de connexion PostgreSQL fournie par Neon              |
+| `API_KEY`      | (obligatoire)                                  | Clé d'accès du personnel, envoyée dans l'en-tête `X-Api-Key` |
+| `PORT`         | `3000`                                         | Port d'écoute en local                                       |
+| `MENU_URL`     | `https://menu-board-api-murex.vercel.app/menu` | Adresse du menu                                              |
+| `VERCEL`       | (absente)                                      | Si définie, le serveur ne démarre pas et l'app est exportée  |
 
 Les constantes `NOMBRE_TABLES` et `STATUTS` sont dans `src/config.js`.
 
