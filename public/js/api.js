@@ -40,6 +40,8 @@ export const api = {
   commandes: () => requete('/api/commandes', {}, { securisee: true }),
   creerCommande: (corps) =>
     requete('/api/commandes', { method: 'POST', body: JSON.stringify(corps) }, { securisee: true }),
+  annulerCommande: (id) =>
+    requete(`/api/commandes/${id}/annuler`, { method: 'POST' }, { securisee: true }),
   changerStatut: (id, statut) =>
     requete(
       `/api/commandes/${id}/statut`,

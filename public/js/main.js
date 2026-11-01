@@ -68,9 +68,14 @@ document.getElementById('valider-cle').addEventListener('click', () => {
 liste.addEventListener('click', async (e) => {
   const bouton = e.target.closest('button[data-id]');
   if (!bouton) return;
+  if (bouton.dataset.action === 'annuler' && !confirm('Annuler cette commande ?')) return;
   bouton.disabled = true;
   try {
-    await api.changerStatut(bouton.dataset.id, bouton.dataset.statut);
+    if (bouton.dataset.action === 'annuler') {
+      await api.annulerCommande(bouton.dataset.id);
+    } else {
+      await api.changerStatut(bouton.dataset.id, bouton.dataset.statut);
+    }
   } catch (erreur) {
     etat.textContent = erreur.message;
   }

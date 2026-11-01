@@ -23,10 +23,21 @@ const ACTION = {
   servie: 'Marquer payée',
 };
 
+// Annulation possible tant que la commande n'est ni prête ni servie
+const ANNULABLE = ['en_attente', 'en_preparation'];
+
 function carte(commande) {
-  const bouton = SUIVANT[commande.statut]
-    ? `<button class="principal" data-id="${echapper(commande.id)}" data-statut="${SUIVANT[commande.statut]}">${ACTION[commande.statut]}</button>`
-    : '';
+  const id = echapper(commande.id);
+  const actions = [];
+
+  if (SUIVANT[commande.statut]) {
+    actions.push(
+      `<button class="principal" data-id="${id}" data-statut="${SUIVANT[commande.statut]}">${ACTION[commande.statut]}</button>`,
+    );
+  }
+  if (ANNULABLE.includes(commande.statut)) {
+    actions.push(`<button class="danger" data-action="annuler" data-id="${id}">Annuler</button>`);
+  }
 
   const produits = commande.lignes
     .map((l) => `${echapper(l.quantite)} × ${echapper(l.produit)}`)
@@ -36,7 +47,7 @@ function carte(commande) {
     <article class="commande">
       <header><strong>Table ${echapper(commande.table)}</strong> <span class="statut">· ${LIBELLES[commande.statut]}</span></header>
       <p>${produits}</p>
-      ${bouton}
+      <div class="actions">${actions.join('')}</div>
     </article>`;
 }
 

@@ -82,3 +82,7 @@ button.secondaire { width: 100%; background: #e8efe9; color: #3b6e4f; }
 .commande:first-child { border-top: none; }
 .commande p { margin: 6px 0 10px; line-height: 1.5; }
 .statut { font-size: .9rem; color: #555; }
+
+.actions { display: flex; gap: 8px; margin-top: 8px; }
+.actions button { flex: 1; }
+button.danger { background: #f0d7d7; color: #8a1c1c; }

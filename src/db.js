@@ -23,6 +23,11 @@ const SCHEMA = `
     cree_le TIMESTAMPTZ NOT NULL DEFAULT now()
   );
 
+  -- Mise à jour du statut autorisé (ajout de « annulee ») pour les bases déjà créées
+  ALTER TABLE commande DROP CONSTRAINT IF EXISTS commande_statut_check;
+  ALTER TABLE commande ADD CONSTRAINT commande_statut_check
+    CHECK (statut IN ('en_attente', 'en_preparation', 'prete', 'servie', 'payee', 'annulee'));
+
   CREATE TABLE IF NOT EXISTS ligne_commande (
     id SERIAL PRIMARY KEY,
     commande_id INTEGER NOT NULL REFERENCES commande(id) ON DELETE CASCADE,

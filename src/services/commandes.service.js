@@ -29,9 +29,16 @@ async function lireCommande(id) {
   return rows[0] ? versApi(rows[0]) : null;
 }
 
+// Explique pourquoi une modification n'a pas abouti
+async function diagnostiquer(id) {
+  const { rows } = await requete('SELECT statut FROM commande WHERE id = $1', [id]);
+  if (rows.length === 0) return { erreur: 'introuvable' };
+  return { erreur: 'non_modifiable', statut: rows[0].statut };
+}
+
 export async function listerActives() {
   const { rows } = await requete(
-    `${SELECT_COMMANDES} WHERE c.statut <> 'payee' GROUP BY c.id ORDER BY c.cree_le, c.id`,
+    `${SELECT_COMMANDES} WHERE c.statut NOT IN ('payee', 'annulee') GROUP BY c.id ORDER BY c.cree_le, c.id`,
   );
   return rows.map(versApi);
 }
@@ -57,9 +64,22 @@ export async function creer({ table, lignes }) {
   return lireCommande(id);
 }
 
-// Renvoie la commande modifiée, ou null si elle n'existe pas
+// Une commande annulée ne peut plus changer de statut
 export async function changerStatut(id, statut) {
-  const { rowCount } = await requete('UPDATE commande SET statut = $2 WHERE id = $1', [id, statut]);
-  if (rowCount === 0) return null;
-  return lireCommande(id);
+  const { rowCount } = await requete(
+    "UPDATE commande SET statut = $2 WHERE id = $1 AND statut <> 'annulee'",
+    [id, statut],
+  );
+  if (rowCount > 0) return { commande: await lireCommande(id) };
+  return diagnostiquer(id);
+}
+
+// Annulation possible uniquement tant que la commande est en attente ou en préparation
+export async function annuler(id) {
+  const { rowCount } = await requete(
+    "UPDATE commande SET statut = 'annulee' WHERE id = $1 AND statut IN ('en_attente', 'en_preparation')",
+    [id],
+  );
+  if (rowCount > 0) return { commande: await lireCommande(id) };
+  return diagnostiquer(id);
 }

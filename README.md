@@ -188,6 +188,22 @@ Modifie le statut d'une commande.
 
 ---
 
+### POST /api/commandes/:id/annuler
+
+Annule une commande, uniquement si elle est encore **en attente** ou **en préparation**. Une commande annulée n'apparaît plus dans `GET /api/commandes`.
+
+**Réponse `200 OK`** : la commande, avec `statut: "annulee"`.
+
+**Réponse `404 Not Found`** : aucune commande ne correspond à cet identifiant.
+
+**Réponse `409 Conflict`** : la commande est déjà prête, servie ou annulée. Elle ne peut plus être annulée.
+
+```json
+{ "erreur": "Annulation impossible : la commande est déjà prête, servie ou annulée" }
+```
+
+---
+
 ## Statuts d'une commande
 
 | Statut           | Signification                                                    |
@@ -197,6 +213,9 @@ Modifie le statut d'une commande.
 | `prete`          | Prête à être servie                                              |
 | `servie`         | Apportée à la table                                              |
 | `payee`          | Encaissée. La commande n'apparaît plus dans `GET /api/commandes` |
+| `annulee`        | Annulée avant d'être prête. Elle disparaît de la liste et ne peut plus changer de statut |
+
+Le statut `annulee` ne se choisit pas avec `PATCH` : il s'applique uniquement via `POST /api/commandes/:id/annuler`.
 
 Le cycle normal est `en_attente → en_preparation → prete → servie → payee`. Pour l'instant, l'API accepte **n'importe quel statut valide** à chaque modification ; l'ordre n'est pas imposé.
 
