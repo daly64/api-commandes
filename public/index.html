@@ -3,47 +3,102 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#3b6e4f">
-  <title>Prise de commande</title>
-  <link rel="stylesheet" href="/css/style.css">
+  <title>Documentation de l'API commandes</title>
+  <style>
+    body { font-family: system-ui, sans-serif; line-height: 1.5; color: #222; max-width: 760px; margin: 0 auto; padding: 16px; }
+    h1 { font-size: 1.6rem; color: #3b6e4f; }
+    h2 { font-size: 1.2rem; margin-top: 32px; border-bottom: 1px solid #ddd; padding-bottom: 4px; }
+    h3 { font-size: 1rem; margin: 20px 0 6px; }
+    code { background: #f1f1ee; padding: 1px 5px; border-radius: 4px; font-size: .92em; }
+    pre { background: #f1f1ee; padding: 12px; border-radius: 8px; overflow-x: auto; font-size: .9rem; }
+    table { border-collapse: collapse; width: 100%; font-size: .95rem; }
+    th, td { border: 1px solid #ddd; padding: 6px 8px; text-align: left; vertical-align: top; }
+    th { background: #f1f1ee; }
+    .methode { font-weight: 700; color: #3b6e4f; }
+  </style>
 </head>
 <body>
-  <header class="entete">
-    <h1>Prise de commande</h1>
-    <span id="etat" class="etat" role="status"></span>
-  </header>
+  <h1>API commandes</h1>
+  <p>API de prise de commande pour le salon de thé. Elle reçoit les commandes des serveurs, les transmet à la cuisine et au bar, et fournit le menu.</p>
 
-  <main>
-    <!-- Affiché seul tant que la clé n'est pas saisie -->
-    <section id="acces" class="carte">
-      <h2>Accès du personnel</h2>
-      <label for="cle">Clé d'accès</label>
-      <input id="cle" type="password" autocomplete="off">
-      <button type="button" id="valider-cle" class="principal">Valider</button>
-    </section>
+  <h2>Généralités</h2>
+  <ul>
+    <li><strong>Adresse de base</strong> : l'adresse de cette page, suivie de <code>/api</code>.</li>
+    <li><strong>Format</strong> : JSON (<code>Content-Type: application/json</code>).</li>
+    <li><strong>Authentification</strong> : les routes <code>/api/commandes</code> exigent l'en-tête <code>X-Api-Key</code>. Sans clé valide, la réponse est <code>401</code>. Le menu est public.</li>
+    <li><strong>Débit</strong> : 300 requêtes par minute et par adresse. Au-delà, <code>429</code>.</li>
+  </ul>
 
-    <!-- Masqué tant que la clé n'est pas valide -->
-    <section class="carte contenu" hidden>
-      <h2>Nouvelle commande</h2>
-      <form id="formulaire" novalidate>
-        <label for="table">Table</label>
-        <select id="table"></select>
+  <h2>Endpoints</h2>
+  <table>
+    <tr><th>Méthode</th><th>Adresse</th><th>Rôle</th><th>Clé requise</th></tr>
+    <tr><td class="methode">GET</td><td><code>/api/menu</code></td><td>Catégories et produits du menu</td><td>Non</td></tr>
+    <tr><td class="methode">GET</td><td><code>/api/commandes</code></td><td>Commandes non payées</td><td>Oui</td></tr>
+    <tr><td class="methode">POST</td><td><code>/api/commandes</code></td><td>Créer une commande</td><td>Oui</td></tr>
+    <tr><td class="methode">PATCH</td><td><code>/api/commandes/:id/statut</code></td><td>Changer le statut d'une commande</td><td>Oui</td></tr>
+  </table>
 
-        <label>Produits</label>
-        <div id="lignes"></div>
-        <button type="button" id="ajouter-ligne" class="secondaire">+ Ajouter un produit</button>
+  <h3>GET /api/menu</h3>
+  <pre><code>{
+  "categories": [{ "id": "6", "nom": "cafes", "visible": true }],
+  "produits": [{ "id": "14", "nom": "Express", "prix": 2, "categorieId": "6", "visible": true }]
+}</code></pre>
+  <p>Le menu est mis en cache une minute. En cas d'erreur de l'API menu, la réponse est <code>502</code>.</p>
 
-        <p id="erreur-formulaire" class="erreur" role="alert"></p>
-        <button type="submit" id="envoyer" class="principal">Envoyer en cuisine</button>
-      </form>
-    </section>
+  <h3>GET /api/commandes</h3>
+  <p>Renvoie les commandes non payées, de la plus ancienne à la plus récente.</p>
+  <pre><code>curl -H "X-Api-Key: VOTRE_CLE" https://VOTRE-ADRESSE/api/commandes</code></pre>
+  <pre><code>[
+  {
+    "id": 1,
+    "table": 3,
+    "lignes": [{ "produit": "Thé vert", "quantite": 2 }],
+    "statut": "en_attente",
+    "creeeLe": "2026-11-01T18:42:10.512Z"
+  }
+]</code></pre>
 
-    <section class="carte contenu" hidden>
-      <h2>Commandes en cours</h2>
-      <div id="liste" aria-live="polite"></div>
-    </section>
-  </main>
+  <h3>POST /api/commandes</h3>
+  <p>Crée une commande pour une table.</p>
+  <pre><code>curl -X POST -H "Content-Type: application/json" -H "X-Api-Key: VOTRE_CLE" \
+  -d '{"table": 3, "lignes": [{"produit": "Thé vert", "quantite": 2}]}' \
+  https://VOTRE-ADRESSE/api/commandes</code></pre>
+  <table>
+    <tr><th>Champ</th><th>Règle</th></tr>
+    <tr><td><code>table</code></td><td>Entier entre 1 et 10</td></tr>
+    <tr><td><code>lignes</code></td><td>De 1 à 20 lignes</td></tr>
+    <tr><td><code>lignes[].produit</code></td><td>Texte non vide, 100 caractères au maximum</td></tr>
+    <tr><td><code>lignes[].quantite</code></td><td>Entier entre 1 et 50</td></tr>
+  </table>
+  <p>Réponse <code>201</code> : la commande créée, avec <code>statut: "en_attente"</code>. Réponse <code>400</code> : <code>{ "erreurs": [...] }</code> listant chaque règle non respectée.</p>
 
-  <script type="module" src="/js/main.js"></script>
+  <h3>PATCH /api/commandes/:id/statut</h3>
+  <p>Modifie le statut de la commande <code>:id</code>.</p>
+  <pre><code>curl -X PATCH -H "Content-Type: application/json" -H "X-Api-Key: VOTRE_CLE" \
+  -d '{"statut": "en_preparation"}' \
+  https://VOTRE-ADRESSE/api/commandes/1/statut</code></pre>
+  <p>Réponse <code>200</code> : la commande modifiée. Réponse <code>400</code> si le statut est inconnu, <code>404</code> si la commande n'existe pas.</p>
+
+  <h2>Statuts d'une commande</h2>
+  <table>
+    <tr><th>Statut</th><th>Signification</th></tr>
+    <tr><td><code>en_attente</code></td><td>Commande reçue, pas encore lancée</td></tr>
+    <tr><td><code>en_preparation</code></td><td>En cours de préparation</td></tr>
+    <tr><td><code>prete</code></td><td>Prête à être servie</td></tr>
+    <tr><td><code>servie</code></td><td>Apportée à la table</td></tr>
+    <tr><td><code>payee</code></td><td>Encaissée. Elle n'apparaît plus dans la liste</td></tr>
+  </table>
+
+  <h2>Codes de réponse</h2>
+  <table>
+    <tr><th>Code</th><th>Signification</th></tr>
+    <tr><td>200 / 201</td><td>Succès</td></tr>
+    <tr><td>400</td><td>Données invalides ou corps de requête mal formé</td></tr>
+    <tr><td>401</td><td>Clé d'accès absente ou invalide</td></tr>
+    <tr><td>404</td><td>Commande introuvable</td></tr>
+    <tr><td>429</td><td>Trop de requêtes dans la minute</td></tr>
+    <tr><td>500</td><td>Erreur interne du serveur</td></tr>
+    <tr><td>502</td><td>Menu indisponible</td></tr>
+  </table>
 </body>
 </html>
