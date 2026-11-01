@@ -190,16 +190,16 @@ Modifie le statut d'une commande.
 
 ### POST /api/commandes/:id/annuler
 
-Annule une commande, uniquement si elle est encore **en attente** ou **en préparation**. Une commande annulée n'apparaît plus dans `GET /api/commandes`.
+Annule une commande, uniquement si elle est encore **en attente** (c'est-à-dire pas encore lancée en préparation). Une commande annulée n'apparaît plus dans `GET /api/commandes`.
 
 **Réponse `200 OK`** : la commande, avec `statut: "annulee"`.
 
 **Réponse `404 Not Found`** : aucune commande ne correspond à cet identifiant.
 
-**Réponse `409 Conflict`** : la commande est déjà prête, servie ou annulée. Elle ne peut plus être annulée.
+**Réponse `409 Conflict`** : la commande est déjà en préparation, prête, servie ou annulée. Elle ne peut plus être annulée.
 
 ```json
-{ "erreur": "Annulation impossible : la commande est déjà prête, servie ou annulée" }
+{ "erreur": "Annulation impossible : la commande est déjà en préparation, prête, servie ou annulée" }
 ```
 
 ---
@@ -213,7 +213,7 @@ Annule une commande, uniquement si elle est encore **en attente** ou **en prépa
 | `prete`          | Prête à être servie                                              |
 | `servie`         | Apportée à la table                                              |
 | `payee`          | Encaissée. La commande n'apparaît plus dans `GET /api/commandes` |
-| `annulee`        | Annulée avant d'être prête. Elle disparaît de la liste et ne peut plus changer de statut |
+| `annulee`        | Annulée pendant qu'elle est encore en attente. Elle disparaît de la liste et ne peut plus changer de statut |
 
 Le statut `annulee` ne se choisit pas avec `PATCH` : il s'applique uniquement via `POST /api/commandes/:id/annuler`.
 

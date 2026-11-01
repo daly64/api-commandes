@@ -74,10 +74,10 @@ export async function changerStatut(id, statut) {
   return diagnostiquer(id);
 }
 
-// Annulation possible uniquement tant que la commande est en attente ou en préparation
+// Annulation possible uniquement tant que la commande est en attente
 export async function annuler(id) {
   const { rowCount } = await requete(
-    "UPDATE commande SET statut = 'annulee' WHERE id = $1 AND statut IN ('en_attente', 'en_preparation')",
+    "UPDATE commande SET statut = 'annulee' WHERE id = $1 AND statut = 'en_attente'",
     [id],
   );
   if (rowCount > 0) return { commande: await lireCommande(id) };

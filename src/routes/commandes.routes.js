@@ -61,7 +61,7 @@ router.post('/:id/annuler', async (req, res, next) => {
     if (resultat.erreur) {
       return res
         .status(409)
-        .json({ erreur: 'Annulation impossible : la commande est déjà prête, servie ou annulée' });
+        .json({ erreur: 'Annulation impossible : la commande est déjà en préparation, prête, servie ou annulée' });
     }
     res.json(resultat.commande);
   } catch (erreur) {

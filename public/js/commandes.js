@@ -23,8 +23,8 @@ const ACTION = {
   servie: 'Marquer payée',
 };
 
-// Annulation possible tant que la commande n'est ni prête ni servie
-const ANNULABLE = ['en_attente', 'en_preparation'];
+// Annulation possible uniquement tant que la commande est en attente
+const ANNULABLE = ['en_attente'];
 
 function carte(commande) {
   const id = echapper(commande.id);
