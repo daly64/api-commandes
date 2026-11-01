@@ -4,8 +4,16 @@ const CLE_STOCKEE = 'cleApi';
 // Erreur levée quand la clé d'accès est absente ou refusée
 export class ErreurAcces extends Error {}
 
+export function cleEnregistree() {
+  return sessionStorage.getItem(CLE_STOCKEE) !== null;
+}
+
 export function enregistrerCle(cle) {
   sessionStorage.setItem(CLE_STOCKEE, cle);
+}
+
+export function effacerCle() {
+  sessionStorage.removeItem(CLE_STOCKEE);
 }
 
 async function requete(url, options = {}, { securisee = false } = {}) {

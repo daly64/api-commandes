@@ -1,5 +1,5 @@
-// Point d'entrée de l'interface : charge le menu, affiche les commandes, rafraîchit
-import { api, ErreurAcces, enregistrerCle } from './api.js';
+// Point d'entrée de l'interface : vérifie la clé, charge le menu, affiche les commandes, rafraîchit
+import { api, ErreurAcces, cleEnregistree, enregistrerCle, effacerCle } from './api.js';
 import { afficherCommandes } from './commandes.js';
 import { initFormulaire, majMenu } from './formulaire.js';
 
@@ -9,10 +9,28 @@ const liste = document.getElementById('liste');
 const etat = document.getElementById('etat');
 const acces = document.getElementById('acces');
 const champCle = document.getElementById('cle');
+const sectionsContenu = document.querySelectorAll('.contenu');
 
 let menuCharge = false;
 
+// Sans clé valide, seul le champ de saisie est visible
+function afficherAcces() {
+  sectionsContenu.forEach((s) => (s.hidden = true));
+  acces.hidden = false;
+}
+
+function afficherContenu() {
+  acces.hidden = true;
+  sectionsContenu.forEach((s) => (s.hidden = false));
+}
+
 async function rafraichir() {
+  // Aucune requête tant qu'aucune clé n'a été saisie
+  if (!cleEnregistree()) {
+    afficherAcces();
+    return;
+  }
+
   // Le menu est rechargé à chaque cycle tant qu'il n'a pas réussi une fois
   if (!menuCharge) {
     try {
@@ -25,12 +43,13 @@ async function rafraichir() {
 
   try {
     afficherCommandes(liste, await api.commandes());
-    acces.hidden = true;
+    afficherContenu();
     if (menuCharge) etat.textContent = '';
   } catch (erreur) {
     if (erreur instanceof ErreurAcces) {
-      acces.hidden = false;
-      etat.textContent = 'Accès requis';
+      effacerCle();
+      afficherAcces();
+      etat.textContent = 'Clé refusée';
     } else {
       etat.textContent = 'Connexion perdue, nouvelle tentative…';
     }
