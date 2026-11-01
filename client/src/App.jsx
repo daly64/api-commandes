@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { api, ErreurAcces, cleEnregistree, effacerCle, enregistrerCle } from './api.js';
 import { INTERVALLE_MS } from './constants.js';
+import { ui } from './ui.js';
 import AccesForm from './components/AccesForm.jsx';
 import FormulaireCommande from './components/FormulaireCommande.jsx';
 import ListeCommandes from './components/ListeCommandes.jsx';
@@ -86,27 +87,27 @@ export default function App() {
   }
 
   return (
-    <>
-      <header className="entete">
-        <h1>Prise de commande</h1>
-        <span className="etat" role="status">{cleValide ? etat : ''}</span>
+    <div className={ui.page}>
+      <header className={ui.entete}>
+        <h1 className={ui.titreEntete}>Prise de commande</h1>
+        <span className={ui.etat} role="status">{cleValide ? etat : ''}</span>
       </header>
 
       {!cleValide ? (
         <AccesForm onValider={validerCle} message={messageAcces} />
       ) : (
-        <main>
-          <section className="carte">
-            <h2>Nouvelle commande</h2>
+        <main className={ui.contenu}>
+          <section className={ui.carte}>
+            <h2 className={ui.titre}>Nouvelle commande</h2>
             <FormulaireCommande menu={menu} onEnvoye={rafraichir} />
           </section>
 
-          <section className="carte">
-            <h2>Commandes en cours</h2>
+          <section className={ui.carte}>
+            <h2 className={ui.titre}>Commandes en cours</h2>
             <ListeCommandes commandes={commandes} onChangerStatut={changerStatut} />
           </section>
         </main>
       )}
-    </>
+    </div>
   );
 }

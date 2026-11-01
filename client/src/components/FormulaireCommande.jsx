@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { api } from '../api.js';
 import { NOMBRE_TABLES } from '../constants.js';
+import { ui } from '../ui.js';
 
 // Identifiant local stable pour chaque ligne (sans dépendre de crypto.randomUUID)
 let compteur = 0;
@@ -51,18 +52,24 @@ export default function FormulaireCommande({ menu, onEnvoye }) {
 
   return (
     <form onSubmit={envoyer} noValidate>
-      <label htmlFor="table">Table</label>
-      <select id="table" value={table} onChange={(e) => setTable(Number(e.target.value))}>
+      <label htmlFor="table" className={ui.label}>Table</label>
+      <select
+        id="table"
+        className={`${ui.champ} mb-2.5`}
+        value={table}
+        onChange={(e) => setTable(Number(e.target.value))}
+      >
         {Array.from({ length: NOMBRE_TABLES }, (_, i) => i + 1).map((n) => (
           <option key={n} value={n}>Table {n}</option>
         ))}
       </select>
 
-      <label>Produits</label>
+      <span className={ui.label}>Produits</span>
       {lignes.map((l) => (
-        <div className="ligne" key={l.id}>
+        <div className={ui.ligne} key={l.id}>
           <select
             aria-label="Produit"
+            className={ui.champ}
             value={l.produit}
             onChange={(e) => modifier(l.id, { produit: e.target.value })}
           >
@@ -86,14 +93,15 @@ export default function FormulaireCommande({ menu, onEnvoye }) {
             max="50"
             inputMode="numeric"
             aria-label="Quantité"
+            className={ui.champ}
             value={l.quantite}
             onChange={(e) => modifier(l.id, { quantite: e.target.value })}
           />
 
           <button
             type="button"
-            className="retirer"
             aria-label="Retirer ce produit"
+            className={ui.boutonRetirer}
             onClick={() => retirer(l.id)}
           >
             ✕
@@ -103,14 +111,14 @@ export default function FormulaireCommande({ menu, onEnvoye }) {
 
       <button
         type="button"
-        className="secondaire"
+        className={ui.boutonSecondaire}
         onClick={() => setLignes((ls) => [...ls, ligneVide()])}
       >
         + Ajouter un produit
       </button>
 
-      <p className="erreur" role="alert">{erreur}</p>
-      <button type="submit" className="principal" disabled={envoi}>
+      <p className={ui.erreur} role="alert">{erreur}</p>
+      <button type="submit" className={ui.boutonPrincipal} disabled={envoi}>
         Envoyer en cuisine
       </button>
     </form>
