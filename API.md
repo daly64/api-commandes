@@ -35,7 +35,18 @@ npm install
 npm start
 ```
 
-Puis ouvrir `http://localhost:3000` pour l'interface, ou appeler directement l'API.
+Avant de lancer le serveur, créez un fichier `.env` à la racine du projet (modèle : `.env.example`) avec :
+
+- `DATABASE_URL` : la chaîne de connexion PostgreSQL fournie par Neon ;
+- `API_KEY` : une longue chaîne aléatoire, à transmettre au personnel.
+
+Le fichier `.env` n'est jamais versionné. Les tables de la base sont créées automatiquement au premier appel.
+
+Puis ouvrir `http://localhost:3000` pour l'interface. Pour appeler l'API directement, joignez la clé d'accès :
+
+```bash
+curl -H "X-Api-Key: votre-cle" http://localhost:3000/api/commandes
+```
 
 ---
 
@@ -118,9 +129,9 @@ Crée une commande pour une table.
 | Champ | Type | Obligatoire | Description |
 |---|---|---|---|
 | `table` | entier | oui | Numéro de table, entre 1 et 10 |
-| `lignes` | tableau | oui | Au moins une ligne |
+| `lignes` | tableau | oui | De 1 à 20 lignes |
 | `lignes[].produit` | string | oui | Nom du produit, non vide |
-| `lignes[].quantite` | entier | oui | Supérieur ou égal à 1 |
+| `lignes[].quantite` | entier | oui | Entre 1 et 50 |
 
 **Réponse `201 Created`** : la commande créée, avec `statut: "en_attente"`.
 
@@ -192,7 +203,7 @@ Le cycle normal est `en_attente → en_preparation → prete → servie → paye
 | Champ | Règle |
 |---|---|
 | `table` | Entier entre 1 et 10 |
-| `lignes` | Tableau avec au moins un élément |
+| `lignes` | Tableau de 1 à 20 éléments |
 | `lignes[].produit` | Texte non vide (les espaces en début et fin sont retirés) |
 | `lignes[].quantite` | Entier entre 1 et 50 |
 | `lignes[].produit` (taille) | 100 caractères au maximum |
