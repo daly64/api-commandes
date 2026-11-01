@@ -12,6 +12,8 @@ const champCle = document.getElementById('cle');
 const sectionsContenu = document.querySelectorAll('.contenu');
 
 let menuCharge = false;
+let derniereListe = '';  // contenu de la dernière liste affichée
+let dernierAppel = 0;    // numéro de la dernière lecture lancée
 
 // Sans clé valide, seul le champ de saisie est visible
 function afficherAcces() {
@@ -31,6 +33,8 @@ async function rafraichir() {
     return;
   }
 
+  const appel = ++dernierAppel;
+
   // Le menu est rechargé à chaque cycle tant qu'il n'a pas réussi une fois
   if (!menuCharge) {
     try {
@@ -42,12 +46,24 @@ async function rafraichir() {
   }
 
   try {
-    afficherCommandes(liste, await api.commandes());
+    const commandes = await api.commandes();
+
+    // Une réponse plus ancienne qu'une lecture plus récente est ignorée
+    if (appel !== dernierAppel) return;
+
+    // La liste n'est reconstruite que si elle a changé : les boutons ne disparaissent pas sous le doigt
+    const signature = JSON.stringify(commandes);
+    if (signature !== derniereListe) {
+      afficherCommandes(liste, commandes);
+      derniereListe = signature;
+    }
+
     afficherContenu();
     if (menuCharge) etat.textContent = '';
   } catch (erreur) {
     if (erreur instanceof ErreurAcces) {
       effacerCle();
+      derniereListe = '';
       afficherAcces();
       etat.textContent = 'Clé refusée';
     } else {
@@ -79,6 +95,8 @@ liste.addEventListener('click', async (e) => {
   } catch (erreur) {
     etat.textContent = erreur.message;
   }
+  // Force une lecture fraîche après une modification
+  derniereListe = '';
   rafraichir();
 });
 
