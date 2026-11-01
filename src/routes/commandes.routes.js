@@ -35,11 +35,11 @@ router.patch('/:id/statut', async (req, res, next) => {
     return res.status(404).json({ erreur: 'Commande introuvable' });
   }
   try {
-    const resultat = await changerStatut(id, statut);
-    if (resultat.erreur === 'introuvable') {
+    const commande = await changerStatut(id, statut);
+    if (!commande) {
       return res.status(404).json({ erreur: 'Commande introuvable' });
     }
-    res.json(resultat.commande);
+    res.json(commande);
   } catch (erreur) {
     next(erreur);
   }

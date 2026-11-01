@@ -1,9 +1,0 @@
-@import "tailwindcss";
-
-/* Couleurs de la marque, utilisables comme bg-vert, text-vert, etc. */
-@theme {
-  --color-vert: #3b6e4f;
-  --color-vert-clair: #e8efe9;
-  --color-rouge: #8a1c1c;
-  --color-rouge-clair: #f0d7d7;
-}
