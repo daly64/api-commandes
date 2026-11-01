@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#3b6e4f">
+  <title>Prise de commande</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <header class="entete">
+    <h1>Prise de commande</h1>
+    <span id="etat" class="etat" role="status"></span>
+  </header>
+
+  <main>
+    <section id="acces" class="carte" hidden>
+      <h2>Accès du personnel</h2>
+      <label for="cle">Clé d'accès</label>
+      <input id="cle" type="password" autocomplete="off">
+      <button type="button" id="valider-cle" class="principal">Valider</button>
+    </section>
+
+    <section class="carte">
+      <h2>Nouvelle commande</h2>
+      <form id="formulaire" novalidate>
+        <label for="table">Table</label>
+        <select id="table"></select>
+
+        <label>Produits</label>
+        <div id="lignes"></div>
+        <button type="button" id="ajouter-ligne" class="secondaire">+ Ajouter un produit</button>
+
+        <p id="erreur-formulaire" class="erreur" role="alert"></p>
+        <button type="submit" id="envoyer" class="principal">Envoyer en cuisine</button>
+      </form>
+    </section>
+
+    <section class="carte">
+      <h2>Commandes en cours</h2>
+      <div id="liste" aria-live="polite">Chargement…</div>
+    </section>
+  </main>
+
+  <script type="module" src="/js/main.js"></script>
+</body>
+</html>
