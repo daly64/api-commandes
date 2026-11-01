@@ -42,7 +42,20 @@ Avant de lancer le serveur, créez un fichier `.env` à la racine du projet (mod
 
 Le fichier `.env` n'est jamais versionné. Les tables de la base sont créées automatiquement au premier appel.
 
-Puis ouvrir `http://localhost:3000` pour l'interface. Pour appeler l'API directement, joignez la clé d'accès :
+Puis ouvrir `http://localhost:3000` pour l'interface.
+
+### Interface (React)
+
+L'interface est une application React dans le dossier `client/`. Son build est écrit dans `public/`, servi par l'API.
+
+```bash
+cd client
+npm install --include=dev   # les dépendances de développement sont nécessaires
+npm run dev                 # développement sur http://localhost:5173 (les appels /api vont au port 3000)
+npm run build               # régénère public/ avant de committer
+```
+
+Pour appeler l'API directement, joignez la clé d'accès :
 
 ```bash
 curl -H "X-Api-Key: votre-cle" http://localhost:3000/api/commandes
