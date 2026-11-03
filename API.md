@@ -146,7 +146,13 @@ Limites HTTP : 300 requêtes par minute et par adresse (`429`), corps de 10 Ko a
 
 ## Déploiement
 
-Les abonnements utilisent une connexion WebSocket permanente : **ils ne fonctionnent pas sur des fonctions serverless comme Vercel**. Hébergez l'API sur une plateforme qui garde un processus Node.js actif, par exemple **Render**, **Railway** ou **Fly.io** :
+### Vercel (HTTP uniquement)
+
+Le projet est déployable sur Vercel grâce à `api/graphql.js` et `vercel.json` : requêtes, mutations et GraphiQL fonctionnent à l'adresse `/graphql`, avec les variables `DATABASE_URL` et `API_KEY`. **Les abonnements WebSocket n'y fonctionnent pas**, car Vercel n'exécute que des fonctions de courte durée.
+
+### Serveur permanent (HTTP + WebSocket)
+
+Pour les abonnements en temps réel, hébergez l'API sur une plateforme qui garde un processus Node.js actif, par exemple **Render**, **Railway** ou **Fly.io** :
 
 - commande de build : `npm install` ;
 - commande de démarrage : `npm start` ;

@@ -1,0 +1,9 @@
+{
+  "regions": ["fra1"],
+  "rewrites": [{ "source": "/graphql", "destination": "/api/graphql" }],
+  "functions": {
+    "api/graphql.js": {
+      "maxDuration": 15
+    }
+  }
+}
