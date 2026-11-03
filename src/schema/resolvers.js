@@ -11,13 +11,6 @@ function erreur(message, code, extensions = {}) {
   return new GraphQLError(message, { extensions: { code, ...extensions } });
 }
 
-// Les opérations sur les commandes exigent la clé d'accès
-function exigerAcces(contexte) {
-  if (!contexte.autorise) {
-    throw erreur('Clé API invalide ou absente', 'UNAUTHENTICATED', { http: { status: 401 } });
-  }
-}
-
 function idCommande(id) {
   const n = Number(id);
   if (!Number.isInteger(n) || n < 1) throw erreur('Commande introuvable', 'NOT_FOUND');
@@ -43,20 +36,13 @@ export const resolvers = {
       }
     },
 
-    commandes: (_parent, _args, contexte) => {
-      exigerAcces(contexte);
-      return listerActives();
-    },
+    commandes: () => listerActives(),
 
-    commande: (_parent, { id }, contexte) => {
-      exigerAcces(contexte);
-      return lireCommande(idCommande(id));
-    },
+    commande: (_parent, { id }) => lireCommande(idCommande(id)),
   },
 
   Mutation: {
-    creerCommande: async (_parent, { table, lignes }, contexte) => {
-      exigerAcces(contexte);
+    creerCommande: async (_parent, { table, lignes }) => {
       const erreurs = validerCommande({ table, lignes });
       if (erreurs.length > 0) {
         throw erreur(erreurs.join(' ; '), 'BAD_USER_INPUT', { erreurs });
@@ -67,8 +53,7 @@ export const resolvers = {
       return commande;
     },
 
-    changerStatut: async (_parent, { id, statut }, contexte) => {
-      exigerAcces(contexte);
+    changerStatut: async (_parent, { id, statut }) => {
       const commande = await changerStatut(idCommande(id), statut);
       if (!commande) throw erreur('Commande introuvable', 'NOT_FOUND');
       await notifierCommande(commande.id);
@@ -78,9 +63,8 @@ export const resolvers = {
 
   Subscription: {
     commandeModifiee: {
-      // Fonctionne en SSE (HTTP) et en WebSocket. L'écoute PostgreSQL est ouverte au premier abonné.
-      subscribe: async (_parent, _args, contexte) => {
-        exigerAcces(contexte);
+      // Flux SSE. L'écoute PostgreSQL est ouverte au premier abonné.
+      subscribe: async () => {
         const liberer = await abonner();
         return avecLiberation(pubsub.subscribe(EVENEMENT_COMMANDE), liberer);
       },

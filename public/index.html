@@ -3,89 +3,161 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>API commandes — GraphQL</title>
+  <title>Commandes en direct</title>
   <style>
-    body { font-family: system-ui, sans-serif; line-height: 1.5; color: #222; max-width: 780px; margin: 0 auto; padding: 16px; }
-    h1 { font-size: 1.6rem; color: #3b6e4f; margin-bottom: 4px; }
-    h2 { font-size: 1.2rem; margin-top: 32px; border-bottom: 1px solid #ddd; padding-bottom: 4px; }
-    code { background: #f1f1ee; padding: 1px 5px; border-radius: 4px; font-size: .92em; }
-    pre { background: #f1f1ee; padding: 12px; border-radius: 8px; overflow-x: auto; font-size: .88rem; }
-    table { border-collapse: collapse; width: 100%; font-size: .95rem; }
-    th, td { border: 1px solid #ddd; padding: 6px 8px; text-align: left; vertical-align: top; }
-    th { background: #f1f1ee; }
-    .bouton { display: inline-block; background: #3b6e4f; color: #fff; padding: 10px 16px; border-radius: 8px; text-decoration: none; margin-top: 8px; }
+    body { font-family: system-ui, sans-serif; margin: 0; padding: 16px; background: #f7f7f5; color: #222; }
+    header { display: flex; justify-content: space-between; align-items: center; max-width: 1100px; margin: 0 auto 16px; }
+    h1 { font-size: 1.4rem; color: #3b6e4f; margin: 0; }
+    #etat { font-size: .9rem; color: #777; }
+    #etat.en-direct { color: #2e7d32; font-weight: 600; }
+    #etat.hors-ligne { color: #c62828; }
+    #liste { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; max-width: 1100px; margin: 0 auto; }
+    .carte { background: #fff; border-radius: 10px; padding: 12px 14px; box-shadow: 0 1px 3px rgba(0, 0, 0, .08); border-top: 6px solid #bbb; }
+    .carte h2 { font-size: 1.1rem; margin: 0 0 6px; }
+    .carte .heure { font-size: .8rem; color: #888; margin-top: 4px; }
+    .carte ul { margin: 8px 0 0; padding-left: 18px; }
+    .statut { display: inline-block; font-size: .8rem; font-weight: 600; padding: 2px 8px; border-radius: 999px; color: #fff; background: #9e9e9e; }
+    .en_attente { border-top-color: #9e9e9e; }
+    .en_preparation { border-top-color: #f9a825; }
+    .en_preparation .statut { background: #f9a825; color: #222; }
+    .prete { border-top-color: #2e7d32; }
+    .prete .statut { background: #2e7d32; }
+    .servie { border-top-color: #1565c0; }
+    .servie .statut { background: #1565c0; }
+    .vide { color: #777; text-align: center; grid-column: 1 / -1; padding: 40px 0; }
+    footer { max-width: 1100px; margin: 24px auto 0; font-size: .85rem; }
+    a { color: #3b6e4f; }
   </style>
 </head>
 <body>
-  <h1>API commandes</h1>
-  <p>API GraphQL de prise de commande pour le salon de thé, avec mises à jour en temps réel par WebSocket.</p>
-  <a class="bouton" href="/test.html">Ouvrir la page de test</a>
-  <a class="bouton" href="/graphql">Ouvrir l'explorateur GraphiQL</a>
+  <header>
+    <h1>Commandes en cours</h1>
+    <span id="etat">connexion…</span>
+  </header>
+  <main id="liste"></main>
+  <footer><a href="/graphql">Explorateur GraphiQL</a></footer>
 
-  <h2>Accès</h2>
-  <table>
-    <tr><th>Usage</th><th>Adresse</th></tr>
-    <tr><td>Requêtes et mutations (HTTP POST)</td><td><code>/graphql</code></td></tr>
-    <tr><td>Abonnements en SSE (HTTP POST avec <code>Accept: text/event-stream</code>)</td><td><code>/graphql</code></td></tr>
-    <tr><td>Abonnements en WebSocket (serveur autonome uniquement)</td><td><code>ws://…/graphql</code></td></tr>
-    <tr><td>Page de test interactive</td><td><code>/test.html</code></td></tr>
-    <tr><td>Explorateur interactif et schéma documenté</td><td><code>/graphql</code> dans un navigateur</td></tr>
-  </table>
+  <script>
+    // Liste et états des commandes, mis à jour en direct par le flux SSE (abonnement GraphQL)
+    const ADRESSE_GRAPHQL = '/graphql';
+    const CHAMPS = 'id table statut creeeLe lignes { produit quantite }';
+    const REQUETE_LISTE = `{ commandes { ${CHAMPS} } }`;
+    const REQUETE_FLUX = `subscription { commandeModifiee { ${CHAMPS} } }`;
+    const LIBELLES = { EN_ATTENTE: 'En attente', EN_PREPARATION: 'En préparation', PRETE: 'Prête', SERVIE: 'Servie' };
 
-  <h2>Clé d'accès</h2>
-  <ul>
-    <li>Le <strong>menu</strong> est public.</li>
-    <li>Tout ce qui concerne les <strong>commandes</strong> exige la clé du personnel :
-      en HTTP, l'en-tête <code>X-Api-Key</code> ; en WebSocket, le paramètre de connexion <code>apiKey</code>.</li>
-    <li>Sans clé valide : erreur <code>UNAUTHENTICATED</code> en HTTP, connexion WebSocket fermée (code <code>4403</code>).</li>
-  </ul>
+    const commandes = new Map();
+    const liste = document.getElementById('liste');
+    const etat = document.getElementById('etat');
 
-  <h2>Opérations</h2>
-  <table>
-    <tr><th>Type</th><th>Nom</th><th>Rôle</th><th>Clé</th></tr>
-    <tr><td>Query</td><td><code>menu</code></td><td>Catégories et produits</td><td>Non</td></tr>
-    <tr><td>Query</td><td><code>commandes</code></td><td>Commandes non payées</td><td>Oui</td></tr>
-    <tr><td>Query</td><td><code>commande(id)</code></td><td>Une commande</td><td>Oui</td></tr>
-    <tr><td>Mutation</td><td><code>creerCommande(table, lignes)</code></td><td>Créer une commande</td><td>Oui</td></tr>
-    <tr><td>Mutation</td><td><code>changerStatut(id, statut)</code></td><td>Changer le statut</td><td>Oui</td></tr>
-    <tr><td>Subscription</td><td><code>commandeModifiee</code></td><td>Chaque commande créée ou modifiée, en direct</td><td>Oui</td></tr>
-  </table>
-  <p>Statuts : <code>EN_ATTENTE</code> → <code>EN_PREPARATION</code> → <code>PRETE</code> → <code>SERVIE</code> → <code>PAYEE</code>.</p>
+    function majEtat(texte, classe = '') {
+      etat.textContent = texte;
+      etat.className = classe;
+    }
 
-  <h2>Exemples</h2>
-  <p>Créer une commande :</p>
-  <pre><code>mutation {
-  creerCommande(table: 3, lignes: [{ produit: "Express", quantite: 2 }]) {
-    id statut lignes { produit quantite }
-  }
-}</code></pre>
+    function element(balise, classe, texte) {
+      const e = document.createElement(balise);
+      if (classe) e.className = classe;
+      if (texte !== undefined) e.textContent = texte;
+      return e;
+    }
 
-  <p>Avec <code>curl</code> :</p>
-  <pre><code>curl -X POST https://VOTRE-ADRESSE/graphql \
-  -H "Content-Type: application/json" -H "X-Api-Key: VOTRE_CLE" \
-  -d '{"query":"{ commandes { id table statut } }"}'</code></pre>
+    function heure(iso) {
+      return new Date(iso).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+    }
 
-  <p>S'abonner en JavaScript (paquet <code>graphql-ws</code>) :</p>
-  <pre><code>import { createClient } from 'graphql-ws';
+    // Les commandes les plus anciennes d'abord ; le texte est inséré sans interprétation HTML
+    function afficher() {
+      const triees = [...commandes.values()].sort(
+        (a, b) => a.creeeLe.localeCompare(b.creeeLe) || Number(a.id) - Number(b.id),
+      );
+      liste.replaceChildren();
+      if (triees.length === 0) {
+        liste.append(element('p', 'vide', 'Aucune commande en cours'));
+        return;
+      }
+      for (const c of triees) {
+        const carte = element('article', `carte ${c.statut.toLowerCase()}`);
+        const lignes = element('ul');
+        for (const l of c.lignes) lignes.append(element('li', '', `${l.quantite} × ${l.produit}`));
+        carte.append(
+          element('h2', '', `Table ${c.table}`),
+          element('span', 'statut', LIBELLES[c.statut] ?? c.statut),
+          element('div', 'heure', `Reçue à ${heure(c.creeeLe)}`),
+          lignes,
+        );
+        liste.append(carte);
+      }
+    }
 
-const client = createClient({
-  url: 'wss://VOTRE-ADRESSE/graphql',
-  connectionParams: { apiKey: 'VOTRE_CLE' },
-});
+    function appliquer(commande) {
+      if (!commande) return;
+      if (commande.statut === 'PAYEE') commandes.delete(commande.id);
+      else commandes.set(commande.id, commande);
+      afficher();
+    }
 
-client.subscribe(
-  { query: 'subscription { commandeModifiee { id table statut } }' },
-  { next: (m) =&gt; console.log(m.data), error: console.error, complete() {} },
-);</code></pre>
+    function requeter(query, entetes = {}) {
+      return fetch(ADRESSE_GRAPHQL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...entetes },
+        body: JSON.stringify({ query }),
+      });
+    }
 
-  <h2>Règles et erreurs</h2>
-  <table>
-    <tr><th>Code d'erreur</th><th>Cas</th></tr>
-    <tr><td><code>UNAUTHENTICATED</code></td><td>Clé absente ou invalide</td></tr>
-    <tr><td><code>BAD_USER_INPUT</code></td><td>Table hors de 1 à 10, 0 ou plus de 20 lignes, quantité hors de 1 à 50, nom de produit vide ou de plus de 100 caractères</td></tr>
-    <tr><td><code>NOT_FOUND</code></td><td>Commande introuvable</td></tr>
-    <tr><td><code>MENU_INDISPONIBLE</code></td><td>L'API menu-board ne répond pas</td></tr>
-  </table>
-  <p>Limites HTTP : 300 requêtes par minute et par adresse (<code>429</code>), corps de 10 Ko au maximum (<code>413</code>).</p>
+    async function chargerListe() {
+      const { data, errors } = await (await requeter(REQUETE_LISTE)).json();
+      if (errors) throw new Error(errors[0].message);
+      commandes.clear();
+      for (const c of data.commandes) commandes.set(c.id, c);
+      afficher();
+    }
+
+    // Découpe un bloc SSE (« event: … » et « data: … ») ; renvoie la commande modifiée, s'il y en a une
+    function lireBloc(bloc) {
+      let evenement = 'message';
+      const donnees = [];
+      for (const ligne of bloc.split('\n')) {
+        if (ligne.startsWith('event:')) evenement = ligne.slice(6).trim();
+        else if (ligne.startsWith('data:')) donnees.push(ligne.slice(5).trim());
+      }
+      if (evenement !== 'next' || donnees.length === 0) return null;
+      return JSON.parse(donnees.join('\n')).data?.commandeModifiee ?? null;
+    }
+
+    // Boucle de connexion : après chaque coupure (y compris la limite de durée de Vercel), on recharge la liste et on se réabonne
+    async function suivre() {
+      while (true) {
+        try {
+          majEtat('connexion…');
+          const reponse = await requeter(REQUETE_FLUX, { Accept: 'text/event-stream' });
+          if (!reponse.ok || !reponse.body) throw new Error(`statut ${reponse.status}`);
+
+          // Le flux est ouvert avant la liste : aucun changement ne peut se perdre entre les deux
+          const lecteur = reponse.body.pipeThrough(new TextDecoderStream()).getReader();
+          await chargerListe();
+          majEtat('en direct', 'en-direct');
+
+          let tampon = '';
+          while (true) {
+            const { value, done } = await lecteur.read();
+            if (done) break;
+            tampon += value;
+            let fin;
+            while ((fin = tampon.indexOf('\n\n')) !== -1) {
+              const bloc = tampon.slice(0, fin);
+              tampon = tampon.slice(fin + 2);
+              appliquer(lireBloc(bloc));
+            }
+          }
+          majEtat('reconnexion…', 'hors-ligne');
+        } catch {
+          majEtat('hors ligne, nouvelle tentative…', 'hors-ligne');
+        }
+        await new Promise((resoudre) => setTimeout(resoudre, 2000));
+      }
+    }
+
+    suivre();
+  </script>
 </body>
 </html>

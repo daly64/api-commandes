@@ -2,7 +2,7 @@
   "name": "api-commandes",
   "version": "1.0.0",
   "private": true,
-  "description": "API GraphQL de prise de commande pour le salon de thé, avec abonnements WebSocket",
+  "description": "API GraphQL de prise de commande pour le salon de thé, avec abonnements en temps réel (SSE)",
   "type": "module",
   "engines": {
     "node": "22.x"
@@ -14,9 +14,7 @@
   "dependencies": {
     "dotenv": "^16.4.5",
     "graphql": "^16.9.0",
-    "graphql-ws": "^5.16.0",
     "graphql-yoga": "^5.10.4",
-    "pg": "^8.13.0",
-    "ws": "^8.18.0"
+    "pg": "^8.13.0"
   }
 }

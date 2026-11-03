@@ -1,5 +1,5 @@
 // Règles de validation des données reçues : aucune requête invalide n'arrive au service
-import { NOMBRE_TABLES, STATUTS } from '../config.js';
+import { NOMBRE_TABLES } from '../config.js';
 
 // Bornes qui protègent la base et évitent les commandes absurdes
 export const LIMITES = {
@@ -33,8 +33,4 @@ export function validerCommande(corps) {
   }
 
   return erreurs;
-}
-
-export function statutValide(statut) {
-  return STATUTS.includes(statut);
 }

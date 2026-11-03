@@ -1,56 +1,25 @@
-// Serveur autonome : HTTP (GraphQL, SSE, pages) et WebSocket (abonnements graphql-ws)
+// Serveur autonome : GraphQL (requêtes, mutations, abonnements SSE) et page d'affichage des commandes
 import 'dotenv/config';
 import { createServer } from 'node:http';
 import { readFile } from 'node:fs/promises';
 import { yoga } from './yoga.js';
-import { brancherWebSocket } from './websocket.js';
-import { creerLimiteur } from './limiteur.js';
-import { API_KEY, PORT, LIMITE_DEBIT, TAILLE_MAX_CORPS } from './config.js';
+import { refuserSiExcessive } from './protection.js';
+import { PORT } from './config.js';
 
-// Pages statiques : documentation et page de test
-const pageAccueil = await readFile(new URL('../public/index.html', import.meta.url));
-const pageTest = await readFile(new URL('../public/test.html', import.meta.url));
-const pages = { '/': pageAccueil, '/index.html': pageAccueil, '/test': pageTest, '/test.html': pageTest };
-const depasseLimite = creerLimiteur(LIMITE_DEBIT, 60_000);
-
-// Adresse du client ; derrière un hébergeur, elle arrive dans X-Forwarded-For
-function adresse(req) {
-  const transmise = req.headers['x-forwarded-for'];
-  return (typeof transmise === 'string' && transmise.split(',')[0].trim()) || req.socket.remoteAddress || 'inconnue';
-}
-
-function repondreErreur(res, statut, message) {
-  res.writeHead(statut, { 'Content-Type': 'application/json; charset=utf-8' });
-  res.end(JSON.stringify({ errors: [{ message }] }));
-}
+const pageAffichage = await readFile(new URL('../public/index.html', import.meta.url));
 
 const serveur = createServer((req, res) => {
-  // Pages statiques : documentation (/) et page de test (/test.html)
   const chemin = (req.url ?? '/').split('?')[0];
-  if (req.method === 'GET' && pages[chemin]) {
+  if (req.method === 'GET' && (chemin === '/' || chemin === '/index.html')) {
     res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
-    return res.end(pages[chemin]);
+    return res.end(pageAffichage);
   }
 
-  if (depasseLimite(adresse(req))) {
-    return repondreErreur(res, 429, 'Trop de requêtes, réessayez dans une minute');
-  }
-
-  if (Number(req.headers['content-length'] ?? 0) > TAILLE_MAX_CORPS) {
-    return repondreErreur(res, 413, 'Requête trop volumineuse');
-  }
+  if (refuserSiExcessive(req, res)) return;
 
   return yoga(req, res);
 });
 
-// WebSocket accepté à toute adresse : /graphql et /api/ws (même adresse que sur Vercel)
-brancherWebSocket(serveur);
-
-if (!API_KEY) {
-  console.warn('Attention : API_KEY absente, toutes les opérations sur les commandes seront refusées.');
-}
-
 serveur.listen(PORT, () => {
-  console.log(`API commandes (GraphQL) : http://localhost:${PORT}/graphql`);
-  console.log(`Abonnements WebSocket   : ws://localhost:${PORT}/api/ws (ou /graphql)`);
+  console.log(`API commandes : http://localhost:${PORT}/ (affichage) et /graphql (GraphQL)`);
 });

@@ -1,4 +1,4 @@
-// Canal de diffusion des événements vers les abonnés WebSocket.
+// Canal de diffusion des événements vers les abonnés SSE.
 // En mémoire : valable pour une seule instance du serveur.
 import { createPubSub } from 'graphql-yoga';
 

@@ -63,23 +63,23 @@ export const typeDefs = /* GraphQL */ `
   }
 
   type Query {
-    "Menu du salon. Public, sans clé."
+    "Menu du salon"
     menu: Menu!
-    "Commandes non payées, de la plus ancienne à la plus récente. Clé requise."
+    "Commandes non payées, de la plus ancienne à la plus récente"
     commandes: [Commande!]!
-    "Une commande par identifiant, ou null. Clé requise."
+    "Une commande par identifiant, ou null"
     commande(id: ID!): Commande
   }
 
   type Mutation {
-    "Crée une commande (de 1 à 20 lignes). Clé requise."
+    "Crée une commande (de 1 à 20 lignes)"
     creerCommande(table: Int!, lignes: [LigneCommandeInput!]!): Commande!
-    "Change le statut d'une commande. Clé requise."
+    "Change le statut d'une commande"
     changerStatut(id: ID!, statut: Statut!): Commande!
   }
 
   type Subscription {
-    "Reçoit chaque commande créée ou modifiée, en temps réel (WebSocket). Clé requise."
+    "Reçoit chaque commande créée ou modifiée, en temps réel (flux SSE)"
     commandeModifiee: Commande!
   }
 `;
