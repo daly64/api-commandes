@@ -9,7 +9,10 @@ import { cleValide } from './auth.js';
 import { creerLimiteur } from './limiteur.js';
 import { API_KEY, PORT, LIMITE_DEBIT, TAILLE_MAX_CORPS } from './config.js';
 
+// Pages statiques : documentation et page de test
 const pageAccueil = await readFile(new URL('../public/index.html', import.meta.url));
+const pageTest = await readFile(new URL('../public/test.html', import.meta.url));
+const pages = { '/': pageAccueil, '/index.html': pageAccueil, '/test': pageTest, '/test.html': pageTest };
 const depasseLimite = creerLimiteur(LIMITE_DEBIT, 60_000);
 
 // Adresse du client ; derrière un hébergeur, elle arrive dans X-Forwarded-For
@@ -24,10 +27,11 @@ function repondreErreur(res, statut, message) {
 }
 
 const serveur = createServer((req, res) => {
-  // Page d'accueil : documentation de l'API
-  if (req.method === 'GET' && (req.url === '/' || req.url === '/index.html')) {
+  // Pages statiques : documentation (/) et page de test (/test.html)
+  const chemin = (req.url ?? '/').split('?')[0];
+  if (req.method === 'GET' && pages[chemin]) {
     res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
-    return res.end(pageAccueil);
+    return res.end(pages[chemin]);
   }
 
   if (depasseLimite(adresse(req))) {
@@ -42,7 +46,8 @@ const serveur = createServer((req, res) => {
 });
 
 // Abonnements GraphQL sur WebSocket (protocole graphql-ws), à la même adresse que l'API : /graphql
-const serveurWs = new WebSocketServer({ server: serveur, path: yoga.graphqlEndpoint });
+// Messages limités à 16 Ko (la valeur par défaut de la librairie ws est de 100 Mo)
+const serveurWs = new WebSocketServer({ server: serveur, path: yoga.graphqlEndpoint, maxPayload: 16 * 1024 });
 
 useServer(
   {

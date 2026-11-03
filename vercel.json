@@ -5,7 +5,7 @@
   "rewrites": [{ "source": "/graphql", "destination": "/api/graphql" }],
   "functions": {
     "api/graphql.js": {
-      "maxDuration": 15
+      "maxDuration": 300
     }
   }
 }

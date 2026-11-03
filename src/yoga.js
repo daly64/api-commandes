@@ -9,8 +9,8 @@ export const yoga = createYoga({
   landingPage: false,
   graphiql: {
     title: 'API commandes',
-    // Dans GraphiQL, les abonnements passent par WebSocket
-    subscriptionsProtocol: 'WS',
+    // Dans GraphiQL, les abonnements passent par SSE : cela fonctionne aussi sur Vercel
+    subscriptionsProtocol: 'SSE',
   },
   // HTTP : en-tête X-Api-Key. WebSocket : connectionParams.apiKey
   context: ({ request, connectionParams }) => ({

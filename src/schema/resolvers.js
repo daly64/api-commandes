@@ -4,6 +4,8 @@ import { chargerMenu } from '../services/menu.service.js';
 import { listerActives, lireCommande, creer, changerStatut } from '../services/commandes.service.js';
 import { validerCommande } from '../validation/commandes.validation.js';
 import { pubsub, EVENEMENT_COMMANDE } from '../pubsub.js';
+import { notifierCommande } from '../notification.js';
+import { abonner, avecLiberation } from '../ecoute.js';
 
 function erreur(message, code, extensions = {}) {
   return new GraphQLError(message, { extensions: { code, ...extensions } });
@@ -60,7 +62,8 @@ export const resolvers = {
         throw erreur(erreurs.join(' ; '), 'BAD_USER_INPUT', { erreurs });
       }
       const commande = await creer({ table, lignes });
-      pubsub.publish(EVENEMENT_COMMANDE, commande);
+      // Diffusion via PostgreSQL : toutes les instances de l'API préviennent leurs abonnés
+      await notifierCommande(commande.id);
       return commande;
     },
 
@@ -68,16 +71,18 @@ export const resolvers = {
       exigerAcces(contexte);
       const commande = await changerStatut(idCommande(id), statut);
       if (!commande) throw erreur('Commande introuvable', 'NOT_FOUND');
-      pubsub.publish(EVENEMENT_COMMANDE, commande);
+      await notifierCommande(commande.id);
       return commande;
     },
   },
 
   Subscription: {
     commandeModifiee: {
-      subscribe: (_parent, _args, contexte) => {
+      // Fonctionne en SSE (HTTP) et en WebSocket. L'écoute PostgreSQL est ouverte au premier abonné.
+      subscribe: async (_parent, _args, contexte) => {
         exigerAcces(contexte);
-        return pubsub.subscribe(EVENEMENT_COMMANDE);
+        const liberer = await abonner();
+        return avecLiberation(pubsub.subscribe(EVENEMENT_COMMANDE), liberer);
       },
       resolve: (commande) => commande,
     },

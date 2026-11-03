@@ -19,13 +19,16 @@
 <body>
   <h1>API commandes</h1>
   <p>API GraphQL de prise de commande pour le salon de thé, avec mises à jour en temps réel par WebSocket.</p>
+  <a class="bouton" href="/test.html">Ouvrir la page de test</a>
   <a class="bouton" href="/graphql">Ouvrir l'explorateur GraphiQL</a>
 
   <h2>Accès</h2>
   <table>
     <tr><th>Usage</th><th>Adresse</th></tr>
     <tr><td>Requêtes et mutations (HTTP POST)</td><td><code>/graphql</code></td></tr>
-    <tr><td>Abonnements (WebSocket, protocole <code>graphql-ws</code>)</td><td><code>ws://…/graphql</code> ou <code>wss://…/graphql</code></td></tr>
+    <tr><td>Abonnements en SSE (HTTP POST avec <code>Accept: text/event-stream</code>)</td><td><code>/graphql</code></td></tr>
+    <tr><td>Abonnements en WebSocket (serveur autonome uniquement)</td><td><code>ws://…/graphql</code></td></tr>
+    <tr><td>Page de test interactive</td><td><code>/test.html</code></td></tr>
     <tr><td>Explorateur interactif et schéma documenté</td><td><code>/graphql</code> dans un navigateur</td></tr>
   </table>
 

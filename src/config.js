@@ -1,6 +1,9 @@
 // Configuration centralisée : tout ce qui peut changer selon l'environnement est ici.
 // Les valeurs sensibles (DATABASE_URL, API_KEY) viennent du fichier .env ou de l'hébergeur, jamais du code.
 export const DATABASE_URL = process.env.DATABASE_URL;
+// Connexion directe (non « pooled ») utilisée pour LISTEN, qui ne passe pas par le pooler de Neon.
+// À défaut, DATABASE_URL est utilisée (suffisant en local).
+export const DATABASE_URL_DIRECT = process.env.DATABASE_URL_DIRECT || process.env.DATABASE_URL;
 // SSL obligatoire pour Neon ; « false » uniquement pour une base locale de développement
 export const DATABASE_SSL = process.env.DATABASE_SSL !== 'false';
 export const API_KEY = process.env.API_KEY;
