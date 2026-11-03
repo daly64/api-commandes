@@ -3,102 +3,86 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Documentation de l'API commandes</title>
+  <title>API commandes — GraphQL</title>
   <style>
-    body { font-family: system-ui, sans-serif; line-height: 1.5; color: #222; max-width: 760px; margin: 0 auto; padding: 16px; }
-    h1 { font-size: 1.6rem; color: #3b6e4f; }
+    body { font-family: system-ui, sans-serif; line-height: 1.5; color: #222; max-width: 780px; margin: 0 auto; padding: 16px; }
+    h1 { font-size: 1.6rem; color: #3b6e4f; margin-bottom: 4px; }
     h2 { font-size: 1.2rem; margin-top: 32px; border-bottom: 1px solid #ddd; padding-bottom: 4px; }
-    h3 { font-size: 1rem; margin: 20px 0 6px; }
     code { background: #f1f1ee; padding: 1px 5px; border-radius: 4px; font-size: .92em; }
-    pre { background: #f1f1ee; padding: 12px; border-radius: 8px; overflow-x: auto; font-size: .9rem; }
+    pre { background: #f1f1ee; padding: 12px; border-radius: 8px; overflow-x: auto; font-size: .88rem; }
     table { border-collapse: collapse; width: 100%; font-size: .95rem; }
     th, td { border: 1px solid #ddd; padding: 6px 8px; text-align: left; vertical-align: top; }
     th { background: #f1f1ee; }
-    .methode { font-weight: 700; color: #3b6e4f; }
+    .bouton { display: inline-block; background: #3b6e4f; color: #fff; padding: 10px 16px; border-radius: 8px; text-decoration: none; margin-top: 8px; }
   </style>
 </head>
 <body>
   <h1>API commandes</h1>
-  <p>API de prise de commande pour le salon de thé. Elle reçoit les commandes des serveurs, les transmet à la cuisine et au bar, et fournit le menu.</p>
+  <p>API GraphQL de prise de commande pour le salon de thé, avec mises à jour en temps réel par WebSocket.</p>
+  <a class="bouton" href="/graphql">Ouvrir l'explorateur GraphiQL</a>
 
-  <h2>Généralités</h2>
+  <h2>Accès</h2>
+  <table>
+    <tr><th>Usage</th><th>Adresse</th></tr>
+    <tr><td>Requêtes et mutations (HTTP POST)</td><td><code>/graphql</code></td></tr>
+    <tr><td>Abonnements (WebSocket, protocole <code>graphql-ws</code>)</td><td><code>ws://…/graphql</code> ou <code>wss://…/graphql</code></td></tr>
+    <tr><td>Explorateur interactif et schéma documenté</td><td><code>/graphql</code> dans un navigateur</td></tr>
+  </table>
+
+  <h2>Clé d'accès</h2>
   <ul>
-    <li><strong>Adresse de base</strong> : l'adresse de cette page, suivie de <code>/api</code>.</li>
-    <li><strong>Format</strong> : JSON (<code>Content-Type: application/json</code>).</li>
-    <li><strong>Authentification</strong> : les routes <code>/api/commandes</code> exigent l'en-tête <code>X-Api-Key</code>. Sans clé valide, la réponse est <code>401</code>. Le menu est public.</li>
-    <li><strong>Débit</strong> : 300 requêtes par minute et par adresse. Au-delà, <code>429</code>.</li>
+    <li>Le <strong>menu</strong> est public.</li>
+    <li>Tout ce qui concerne les <strong>commandes</strong> exige la clé du personnel :
+      en HTTP, l'en-tête <code>X-Api-Key</code> ; en WebSocket, le paramètre de connexion <code>apiKey</code>.</li>
+    <li>Sans clé valide : erreur <code>UNAUTHENTICATED</code> en HTTP, connexion WebSocket fermée (code <code>4403</code>).</li>
   </ul>
 
-  <h2>Endpoints</h2>
+  <h2>Opérations</h2>
   <table>
-    <tr><th>Méthode</th><th>Adresse</th><th>Rôle</th><th>Clé requise</th></tr>
-    <tr><td class="methode">GET</td><td><code>/api/menu</code></td><td>Catégories et produits du menu</td><td>Non</td></tr>
-    <tr><td class="methode">GET</td><td><code>/api/commandes</code></td><td>Commandes non payées</td><td>Oui</td></tr>
-    <tr><td class="methode">POST</td><td><code>/api/commandes</code></td><td>Créer une commande</td><td>Oui</td></tr>
-    <tr><td class="methode">PATCH</td><td><code>/api/commandes/:id/statut</code></td><td>Changer le statut d'une commande</td><td>Oui</td></tr>
+    <tr><th>Type</th><th>Nom</th><th>Rôle</th><th>Clé</th></tr>
+    <tr><td>Query</td><td><code>menu</code></td><td>Catégories et produits</td><td>Non</td></tr>
+    <tr><td>Query</td><td><code>commandes</code></td><td>Commandes non payées</td><td>Oui</td></tr>
+    <tr><td>Query</td><td><code>commande(id)</code></td><td>Une commande</td><td>Oui</td></tr>
+    <tr><td>Mutation</td><td><code>creerCommande(table, lignes)</code></td><td>Créer une commande</td><td>Oui</td></tr>
+    <tr><td>Mutation</td><td><code>changerStatut(id, statut)</code></td><td>Changer le statut</td><td>Oui</td></tr>
+    <tr><td>Subscription</td><td><code>commandeModifiee</code></td><td>Chaque commande créée ou modifiée, en direct</td><td>Oui</td></tr>
   </table>
+  <p>Statuts : <code>EN_ATTENTE</code> → <code>EN_PREPARATION</code> → <code>PRETE</code> → <code>SERVIE</code> → <code>PAYEE</code>.</p>
 
-  <h3>GET /api/menu</h3>
-  <pre><code>{
-  "categories": [{ "id": "6", "nom": "cafes", "visible": true }],
-  "produits": [{ "id": "14", "nom": "Express", "prix": 2, "categorieId": "6", "visible": true }]
-}</code></pre>
-  <p>Le menu est mis en cache une minute. En cas d'erreur de l'API menu, la réponse est <code>502</code>.</p>
-
-  <h3>GET /api/commandes</h3>
-  <p>Renvoie les commandes non payées, de la plus ancienne à la plus récente.</p>
-  <pre><code>curl -H "X-Api-Key: VOTRE_CLE" https://VOTRE-ADRESSE/api/commandes</code></pre>
-  <pre><code>[
-  {
-    "id": 1,
-    "table": 3,
-    "lignes": [{ "produit": "Thé vert", "quantite": 2 }],
-    "statut": "en_attente",
-    "creeeLe": "2026-11-01T18:42:10.512Z"
+  <h2>Exemples</h2>
+  <p>Créer une commande :</p>
+  <pre><code>mutation {
+  creerCommande(table: 3, lignes: [{ produit: "Express", quantite: 2 }]) {
+    id statut lignes { produit quantite }
   }
-]</code></pre>
+}</code></pre>
 
-  <h3>POST /api/commandes</h3>
-  <p>Crée une commande pour une table.</p>
-  <pre><code>curl -X POST -H "Content-Type: application/json" -H "X-Api-Key: VOTRE_CLE" \
-  -d '{"table": 3, "lignes": [{"produit": "Thé vert", "quantite": 2}]}' \
-  https://VOTRE-ADRESSE/api/commandes</code></pre>
+  <p>Avec <code>curl</code> :</p>
+  <pre><code>curl -X POST https://VOTRE-ADRESSE/graphql \
+  -H "Content-Type: application/json" -H "X-Api-Key: VOTRE_CLE" \
+  -d '{"query":"{ commandes { id table statut } }"}'</code></pre>
+
+  <p>S'abonner en JavaScript (paquet <code>graphql-ws</code>) :</p>
+  <pre><code>import { createClient } from 'graphql-ws';
+
+const client = createClient({
+  url: 'wss://VOTRE-ADRESSE/graphql',
+  connectionParams: { apiKey: 'VOTRE_CLE' },
+});
+
+client.subscribe(
+  { query: 'subscription { commandeModifiee { id table statut } }' },
+  { next: (m) =&gt; console.log(m.data), error: console.error, complete() {} },
+);</code></pre>
+
+  <h2>Règles et erreurs</h2>
   <table>
-    <tr><th>Champ</th><th>Règle</th></tr>
-    <tr><td><code>table</code></td><td>Entier entre 1 et 10</td></tr>
-    <tr><td><code>lignes</code></td><td>De 1 à 20 lignes</td></tr>
-    <tr><td><code>lignes[].produit</code></td><td>Texte non vide, 100 caractères au maximum</td></tr>
-    <tr><td><code>lignes[].quantite</code></td><td>Entier entre 1 et 50</td></tr>
+    <tr><th>Code d'erreur</th><th>Cas</th></tr>
+    <tr><td><code>UNAUTHENTICATED</code></td><td>Clé absente ou invalide</td></tr>
+    <tr><td><code>BAD_USER_INPUT</code></td><td>Table hors de 1 à 10, 0 ou plus de 20 lignes, quantité hors de 1 à 50, nom de produit vide ou de plus de 100 caractères</td></tr>
+    <tr><td><code>NOT_FOUND</code></td><td>Commande introuvable</td></tr>
+    <tr><td><code>MENU_INDISPONIBLE</code></td><td>L'API menu-board ne répond pas</td></tr>
   </table>
-  <p>Réponse <code>201</code> : la commande créée, avec <code>statut: "en_attente"</code>. Réponse <code>400</code> : <code>{ "erreurs": [...] }</code> listant chaque règle non respectée.</p>
-
-  <h3>PATCH /api/commandes/:id/statut</h3>
-  <p>Modifie le statut de la commande <code>:id</code>.</p>
-  <pre><code>curl -X PATCH -H "Content-Type: application/json" -H "X-Api-Key: VOTRE_CLE" \
-  -d '{"statut": "en_preparation"}' \
-  https://VOTRE-ADRESSE/api/commandes/1/statut</code></pre>
-  <p>Réponse <code>200</code> : la commande modifiée. Réponse <code>400</code> si le statut est inconnu, <code>404</code> si la commande n'existe pas.</p>
-
-  <h2>Statuts d'une commande</h2>
-  <table>
-    <tr><th>Statut</th><th>Signification</th></tr>
-    <tr><td><code>en_attente</code></td><td>Commande reçue, pas encore lancée</td></tr>
-    <tr><td><code>en_preparation</code></td><td>En cours de préparation</td></tr>
-    <tr><td><code>prete</code></td><td>Prête à être servie</td></tr>
-    <tr><td><code>servie</code></td><td>Apportée à la table</td></tr>
-    <tr><td><code>payee</code></td><td>Encaissée. Elle n'apparaît plus dans la liste</td></tr>
-  </table>
-
-  <h2>Codes de réponse</h2>
-  <table>
-    <tr><th>Code</th><th>Signification</th></tr>
-    <tr><td>200 / 201</td><td>Succès</td></tr>
-    <tr><td>400</td><td>Données invalides ou corps de requête mal formé</td></tr>
-    <tr><td>401</td><td>Clé d'accès absente ou invalide</td></tr>
-    <tr><td>404</td><td>Commande introuvable</td></tr>
-    <tr><td>429</td><td>Trop de requêtes dans la minute</td></tr>
-    <tr><td>500</td><td>Erreur interne du serveur</td></tr>
-    <tr><td>502</td><td>Menu indisponible</td></tr>
-  </table>
+  <p>Limites HTTP : 300 requêtes par minute et par adresse (<code>429</code>), corps de 10 Ko au maximum (<code>413</code>).</p>
 </body>
 </html>

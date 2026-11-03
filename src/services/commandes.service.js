@@ -1,7 +1,7 @@
 // Logique métier des commandes, stockées dans PostgreSQL (Neon)
 import { requete, transaction } from '../db.js';
 
-// Ramène une ligne SQL au format attendu par l'API
+// Ramène une ligne SQL au format de l'API
 function versApi(ligne) {
   return {
     id: ligne.id,
@@ -24,11 +24,13 @@ const SELECT_COMMANDES = `
   LEFT JOIN ligne_commande l ON l.commande_id = c.id
 `;
 
-async function lireCommande(id) {
+// Renvoie la commande, ou null si elle n'existe pas
+export async function lireCommande(id) {
   const { rows } = await requete(`${SELECT_COMMANDES} WHERE c.id = $1 GROUP BY c.id`, [id]);
   return rows[0] ? versApi(rows[0]) : null;
 }
 
+// Commandes non payées, de la plus ancienne à la plus récente
 export async function listerActives() {
   const { rows } = await requete(
     `${SELECT_COMMANDES} WHERE c.statut <> 'payee' GROUP BY c.id ORDER BY c.cree_le, c.id`,

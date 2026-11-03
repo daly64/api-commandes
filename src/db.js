@@ -1,15 +1,15 @@
 // Connexion à PostgreSQL (Neon) et création des tables au premier usage
 import pg from 'pg';
-import { DATABASE_URL } from './config.js';
+import { DATABASE_URL, DATABASE_SSL } from './config.js';
 
 if (!DATABASE_URL) {
-  throw new Error('DATABASE_URL manquante : ajoutez-la dans le fichier .env (ou dans les variables Vercel)');
+  throw new Error('DATABASE_URL manquante : ajoutez-la dans le fichier .env ou dans les variables de l\'hébergeur');
 }
 
-// Neon impose une connexion chiffrée (SSL)
+// Neon impose une connexion chiffrée (SSL) ; elle peut être désactivée pour une base locale
 const pool = new pg.Pool({
   connectionString: DATABASE_URL,
-  ssl: { rejectUnauthorized: true },
+  ssl: DATABASE_SSL ? { rejectUnauthorized: true } : false,
   max: 5,
 });
 
@@ -61,4 +61,9 @@ export async function transaction(fonction) {
   } finally {
     client.release();
   }
+}
+
+// Ferme les connexions (arrêt propre du serveur)
+export function fermer() {
+  return pool.end();
 }

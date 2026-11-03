@@ -7,21 +7,21 @@ let dateCache = 0;
 
 // L'API menu-board renvoie un tableau de catégories, chacune avec ses produits :
 // [{ id, name, orderIndex, isVisible, products: [{ id, name, price, isVisible, categoryId, ... }] }]
-// On le transforme en deux listes à plat, plus simples à utiliser dans l'interface.
+// On le transforme en deux listes à plat.
 function normaliser(categoriesBrutes) {
   const categories = categoriesBrutes.map((c) => ({
-    id: c.id,
+    id: String(c.id),
     nom: c.name,
-    visible: c.isVisible,
+    visible: c.isVisible !== false,
   }));
 
   const produits = categoriesBrutes.flatMap((c) =>
     (c.products ?? []).map((p) => ({
-      id: p.id,
+      id: String(p.id),
       nom: p.name,
-      prix: p.price,
-      categorieId: p.categoryId ?? c.id,
-      visible: p.isVisible,
+      prix: Number(p.price ?? 0),
+      categorieId: String(p.categoryId ?? c.id),
+      visible: p.isVisible !== false,
     })),
   );
 
