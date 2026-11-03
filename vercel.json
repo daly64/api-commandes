@@ -1,4 +1,6 @@
 {
+  "framework": null,
+  "outputDirectory": "public",
   "regions": ["fra1"],
   "rewrites": [{ "source": "/graphql", "destination": "/api/graphql" }],
   "functions": {

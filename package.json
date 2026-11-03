@@ -5,7 +5,7 @@
   "description": "API GraphQL de prise de commande pour le salon de thé, avec abonnements WebSocket",
   "type": "module",
   "engines": {
-    "node": ">=20"
+    "node": "22.x"
   },
   "scripts": {
     "start": "node src/server.js",
