@@ -4,7 +4,7 @@ API de prise de commande pour le salon de thé. Elle reçoit les commandes des s
 
 - **Requêtes et mutations** : `POST /graphql`
 - **Abonnements en SSE** : `POST /graphql` avec l'en-tête `Accept: text/event-stream` (fonctionne sur Vercel)
-- **Abonnements en WebSocket** : `ws://…/graphql`, protocole `graphql-ws` (serveur autonome uniquement)
+- **Abonnements en WebSocket** : `wss://…/api/ws`, protocole `graphql-ws` (WebSocket natif Vercel, en bêta chez Vercel ; le serveur autonome l'accepte aussi sur `/graphql`)
 - **Explorateur GraphiQL** : `/graphql` dans un navigateur
 - **Page de test interactive** : `/test.html`
 - **Documentation** : `/`
@@ -112,6 +112,24 @@ curl -N -X POST https://api-commandes-dun.vercel.app/graphql \
 
 En JavaScript, utilisez `fetch` avec ces en-têtes (voir `/test.html`) ou la librairie `graphql-sse`. L'objet `EventSource` des navigateurs ne permet pas d'envoyer la clé.
 
+S'abonner en WebSocket (paquet `graphql-ws`) :
+
+```js
+import { createClient } from 'graphql-ws';
+
+const client = createClient({
+  url: 'wss://api-commandes-dun.vercel.app/api/ws',
+  connectionParams: { apiKey: 'VOTRE_CLE' },
+});
+
+client.subscribe(
+  { query: 'subscription { commandeModifiee { id table statut } }' },
+  { next: (message) => console.log(message.data), error: console.error, complete() {} },
+);
+```
+
+Sans librairie, le protocole `graphql-transport-ws` se résume à : ouvrir la connexion avec ce sous-protocole, envoyer `{"type":"connection_init","payload":{"apiKey":"…"}}`, attendre `connection_ack`, envoyer `{"id":"1","type":"subscribe","payload":{"query":"subscription { … }"}}`, puis lire les messages `next`. Répondre `{"type":"pong"}` à chaque `ping`.
+
 L'abonnement reçoit la commande complète à chaque création et à chaque changement de statut. Une commande `PAYEE` doit être retirée de l'affichage côté client. Après une reconnexion, relisez `commandes` pour ne rien manquer.
 
 ## Diffusion entre instances
@@ -148,8 +166,8 @@ Limites HTTP : 300 requêtes par minute et par adresse (`429`), corps de 10 Ko a
 ### Vercel (configuration actuelle)
 
 `api/graphql.js` et `vercel.json` servent requêtes, mutations, **abonnements SSE**, GraphiQL et les pages statiques. Variables à définir dans le projet Vercel : `DATABASE_URL`, `API_KEY` et, de préférence, `DATABASE_URL_DIRECT`.
-Un flux SSE dure au plus la durée maximale d'une fonction (300 s ici) : les clients doivent se reconnecter automatiquement, ce que font la page de test et l'application Android.
-Le WebSocket n'est pas branché dans la fonction Vercel.
+`api/ws.js` sert les **abonnements WebSocket natifs** de Vercel (bêta publique, Fluid Compute requis) à l'adresse `/api/ws`.
+Un flux SSE comme une connexion WebSocket dure au plus la durée maximale d'une fonction (300 s ici) : les clients doivent se reconnecter automatiquement, ce que font la page de test et l'application Android. Le serveur envoie un signal de vie toutes les 25 s et ferme les connexions mortes.
 
 ### Serveur permanent (SSE + WebSocket)
 
@@ -159,8 +177,10 @@ Sur une plateforme qui garde un processus Node.js actif (Render, Railway, Fly.io
 
 ```
 api/graphql.js                fonction Vercel (HTTP + SSE)
+api/ws.js                     fonction Vercel (WebSocket natif)
 src/
 ├── server.js                 serveur autonome : HTTP, SSE, WebSocket, pages, limites
+├── websocket.js              abonnements WebSocket (graphql-ws), signal de vie
 ├── yoga.js                   serveur GraphQL (Yoga) et contexte d'authentification
 ├── schema/                   schéma, résolveurs, assemblage
 ├── notification.js           publication des événements (pg_notify)

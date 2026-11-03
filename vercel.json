@@ -6,6 +6,9 @@
   "functions": {
     "api/graphql.js": {
       "maxDuration": 300
+    },
+    "api/ws.js": {
+      "maxDuration": 300
     }
   }
 }
